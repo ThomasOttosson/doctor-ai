@@ -135,3 +135,5 @@ LOGOUT_REDIRECT_URL = '/login/'
 # Session settings
 SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_SAVE_EVERY_REQUEST = True
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
