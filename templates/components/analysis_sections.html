@@ -1,0 +1,173 @@
+<!-- ANALYSIS BUTTONS SECTION -->
+<div class="analysis-sections">
+    <!-- Nutrition & Diet Section -->
+    <div class="analysis-section">
+        <div class="section-title">Nutrition & Diet</div>
+        <div class="analysis-grid">
+            <button class="analysis-btn" onclick="startAnalysis('vitamin_minerals')">
+                <i class="fas fa-pills"></i>
+                Analyze your daily vitamin & minerals intake
+            </button>
+            <button class="analysis-btn" onclick="startAnalysis('food_quality')">
+                <i class="fas fa-apple-alt"></i>
+                Analyze your weekly quality of food
+            </button>
+            <button class="analysis-btn" onclick="startAnalysis('meal_balance')">
+                <i class="fas fa-balance-scale"></i>
+                Analyze your weekly meal balance
+            </button>
+            <button class="analysis-btn" onclick="startAnalysis('calorie_intake')">
+                <i class="fas fa-weight"></i>
+                Analyze your daily calorie intake
+            </button>
+            <button class="analysis-btn" onclick="startAnalysis('digestion')">
+                <i class="fas fa-heart"></i>
+                Analyze your digestion & gut health patterns
+            </button>
+        </div>
+    </div>
+    
+    <!-- Exercise & Fitness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Exercise & Fitness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('exercise_routine')">
+                                    <i class="fas fa-running"></i>
+                                    Analyze your weekly exercise routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('exercise_balance')">
+                                    <i class="fas fa-dumbbell"></i>
+                                    Analyze your cardio vs strength training balance
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('mobility')">
+                                    <i class="fas fa-walking"></i>
+                                    Analyze your daily mobility & flexibility routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('posture')">
+                                    <i class="fas fa-user-md"></i>
+                                    Analyze your posture & ergonomics habits
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Mental Health & Wellness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Mental Health & Wellness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('sleep_quality')">
+                                    <i class="fas fa-bed"></i>
+                                    Analyze your sleep quality & habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('stress_levels')">
+                                    <i class="fas fa-brain"></i>
+                                    Analyze your stress levels & daily workload
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('mental_wellbeing')">
+                                    <i class="fas fa-heart"></i>
+                                    Analyze your mental well-being routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('energy_levels')">
+                                    <i class="fas fa-battery-half"></i>
+                                    Analyze your daily energy levels
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('productivity')">
+                                    <i class="fas fa-tasks"></i>
+                                    Analyze your daily productivity & burnout risk
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lifestyle & Habits Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Lifestyle & Habits</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('hydration')">
+                                    <i class="fas fa-tint"></i>
+                                    Analyze your hydration levels throughout the day
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('caffeine')">
+                                    <i class="fas fa-coffee"></i>
+                                    Analyze your caffeine & stimulant consumption
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('alcohol')">
+                                    <i class="fas fa-wine-glass-alt"></i>
+                                    Analyze your alcohol intake & lifestyle balance
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('screen_time')">
+                                    <i class="fas fa-desktop"></i>
+                                    Analyze your screen time & blue-light exposure
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Health & Wellness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Health & Wellness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('hormone_health')">
+                                    <i class="fas fa-seedling"></i>
+                                    Analyze your hormone-supporting lifestyle habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('immune_health')">
+                                    <i class="fas fa-shield-virus"></i>
+                                    Analyze your immune-supporting habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('chronic_pain')">
+                                    <i class="fas fa-band-aid"></i>
+                                    Analyze your chronic pain or discomfort patterns
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('environmental_toxins')">
+                                    <i class="fas fa-leaf"></i>
+                                    Analyze your household environmental toxins exposure
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('menstrual_health')">
+                                    <i class="fas fa-venus"></i>
+                                    Analyze your menstrual cycle health
+                                </button>
+                            </div>
+                        </div>
+</div>
+
+<script>
+// Analysis specific JavaScript
+async function startAnalysis(analysisType) {
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch('/api/start_analysis/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                analysis_type: analysisType
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to start analysis');
+        }
+        
+        const data = await response.json();
+        currentSessionId = data.session_id;
+        currentSessionType = data.session_type;
+        currentAnalysisType = analysisType;
+        
+        hideTypingIndicator();
+        addMessage(data.ai_response, false);
+        
+        // Reload chat history to show the new session
+        {% if user.is_authenticated %}
+            if (typeof loadChatHistory === 'function') {
+                loadChatHistory();
+            }
+        {% endif %}
+        
+    } catch (error) {
+        console.error('Error starting analysis:', error);
+        hideTypingIndicator();
+        addMessage("I'm having trouble starting the analysis. Please try again.", false);
+    }
+}
+</script>

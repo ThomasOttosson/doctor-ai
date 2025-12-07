@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor AI - Your AI Medical Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 80px;
+            background: linear-gradient(135deg, #2c7be5 0%, #1a5db6 100%);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+            max-height: 100vh;
+            position: sticky;
+            top: 0;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.15);
+            color: white;
+            z-index: 100;
+        }
+
+        .sidebar.expanded {
+            width: 300px;
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.1);
+            min-height: 80px;
+        }
+
+        .sidebar.expanded .sidebar-header {
+            justify-content: space-between;
+        }
+
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            font-size: 1.2rem;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .sidebar.expanded .sidebar-toggle {
+            transform: rotate(0deg);
+        }
+
+        .sidebar-content {
+            padding: 20px 10px;
+        }
+
+        .sidebar.expanded .sidebar-content {
+            padding: 20px;
+        }
+
+        .chat-history h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar:not(.expanded) .chat-history h3 {
+            display: none;
+        }
+
+        .chat-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .chat-item {
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            min-height: 50px;
+        }
+
+        .sidebar.expanded .chat-item {
+            padding: 12px 15px;
+            justify-content: space-between;
+        }
+
+        .chat-item:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .chat-item.active {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-title {
+            font-weight: 500;
+            color: white;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: none;
+            font-size: 0.85rem;
+        }
+
+        .sidebar.expanded .chat-title {
+            display: block;
+        }
+
+        .chat-date {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+            display: none;
+        }
+
+        .sidebar.expanded .chat-date {
+            display: block;
+        }
+
+        /* Tooltip for collapsed state */
+        .chat-item-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .chat-item-tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-right-color: #333;
+        }
+
+        .sidebar:not(.expanded) .chat-item:hover .chat-item-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Icon for collapsed chat items */
+        .chat-item-icon {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .sidebar.expanded .chat-item-icon {
+            display: none;
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .sidebar.expanded .login-prompt {
+            padding: 20px;
+        }
+
+        .sidebar:not(.expanded) .login-prompt h4,
+        .sidebar:not(.expanded) .login-prompt p {
+            display: none;
+        }
+
+        /* Responsive login button for collapsed sidebar */
+        .sidebar:not(.expanded) .login-prompt .btn {
+            padding: 10px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar:not(.expanded) .login-prompt .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .sidebar:not(.expanded) .login-prompt .btn i {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.expanded .login-prompt .btn {
+            display: inline-block;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .sidebar.expanded .login-prompt .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Empty state for collapsed sidebar */
+        .collapsed-empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px 10px;
+            display: none;
+            font-size: 0.8rem;
+        }
+
+        .sidebar:not(.expanded) .collapsed-empty-state {
+            display: block;
+        }
+
+        .sidebar:not(.expanded) .chat-list:not(:empty) + .collapsed-empty-state {
+            display: none;
+        }
+
+        /* Error message styling */
+        .error-message {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #721c24;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .error-message i {
+            margin-right: 8px;
+            color: #dc3545;
+        }
+
+        /* Markdown styles */
+        .message-content h1, .message-content h2, .message-content h3 {
+            color: #2c7be5;
+            margin: 10px 0 5px 0;
+            font-weight: 600;
+        }
+        
+        .message-content h1 { font-size: 1.3rem; }
+        .message-content h2 { font-size: 1.2rem; }
+        .message-content h3 { font-size: 1.1rem; }
+        
+        .message-content strong {
+            font-weight: 600;
+            color: inherit;
+        }
+        
+        .message-content em {
+            font-style: italic;
+        }
+        
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .message-content li {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        
+        .message-content code {
+            background: rgba(44, 123, 229, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .message-content pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-left: 3px solid #2c7be5;
+        }
+        
+        .message-content blockquote {
+            border-left: 3px solid #e9ecef;
+            padding-left: 15px;
+            margin: 10px 0;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: #2c7be5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn.active {
+            background: #1a5db6;
+            transform: rotate(90deg);
+        }
+
+        /* Container and Spacing */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            gap: 15px;
+        }
+
+        /* Logo Size */
+        .logo-image {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 6px 20px rgba(44, 123, 229, 0.25);
+            border: 3px solid white;
+            background: white;
+            animation: pulse 2s infinite;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-direction: column;
+        }
+        
+        /* Header Text */
+        h1 {
+            font-size: 2.4rem;
+            color: #2c7be5;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-top: 8px;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        /* Ask Me a Question Button Styles */
+        .ask-question-btn {
+            background: linear-gradient(135deg, #2c7be5 0%, #1a5db6 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px auto 20px;
+            box-shadow: 0 3px 12px rgba(44, 123, 229, 0.25);
+        }
+
+        .ask-question-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(44, 123, 229, 0.4);
+        }
+
+        .ask-question-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .ask-question-btn i {
+            font-size: 1.2rem;
+        }
+
+        /* Session Info */
+        .session-info {
+            background: #e7f1ff;
+            border-left: 3px solid #2c7be5;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-info h3 {
+            margin: 0;
+            color: #2c7be5;
+            font-size: 1rem;
+        }
+
+        .session-info .btn {
+            background: #2c7be5;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Authentication Header Styles */
+        .auth-header {
+            background: #2c7be5;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .auth-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .auth-links a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .auth-links a:hover {
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .guest-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        
+        /* Analysis Sections */
+        .analysis-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .analysis-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            color: #2c7be5;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            gap: 8px;
+        }
+        
+        .analysis-btn {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #495057;
+            line-height: 1.3;
+        }
+        
+        .analysis-btn:hover {
+            border-color: #2c7be5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 123, 229, 0.15);
+            background: #f8fbff;
+        }
+        
+        .analysis-btn i {
+            color: #2c7be5;
+            font-size: 1rem;
+            width: 18px;
+            text-align: center;
+        }
+        
+        .disclaimer {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #856404;
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+        
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            min-height: 450px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 350px;
+        }
+        
+        /* Chat bubbles */
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            line-height: 1.4;
+            position: relative;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #2c7be5;
+            color: white;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #f0f4f8;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            margin-right: auto;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        
+        /* Avatar styles with images */
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+        
+        .ai-avatar {
+            background-color: #2c7be5;
+            border-color: #2c7be5;
+        }
+        
+        .user-avatar {
+            background-color: #495057;
+            border-color: #495057;
+        }
+        
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .avatar-icon {
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #eaeaea;
+            background-color: white;
+            position: sticky;
+            bottom: 0;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 0;
+        }
+        
+        #chat-input:focus {
+            border-color: #2c7be5;
+            box-shadow: 0 0 0 2px rgba(44, 123, 229, 0.1);
+        }
+        
+        #send-button {
+            background-color: #2c7be5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        
+        #send-button:hover {
+            background-color: #1a5db6;
+            transform: scale(1.05);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f0f4f8;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        .sidebar.open + .sidebar-overlay {
+            display: block;
+        }
+        
+        /* Chat history text responsiveness */
+        .sidebar:not(.expanded) .chat-history {
+            text-align: center;
+        }
+
+        .sidebar:not(.expanded) .chat-item {
+            min-height: 44px;
+        }
+
+        /* Long text handling in chat bubbles */
+        .message-content {
+            word-break: break-word;
+            hyphens: auto;
+        }
+
+        .message {
+            overflow-wrap: anywhere;
+        }
+
+        /* Improved logo in navbar */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .logo-img {
+            height: 30px;
+            width: auto;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                z-index: 1000;
+                height: 100vh;
+                width: 300px;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.expanded {
+                width: 300px;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .sidebar.expanded.open {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .container {
+                padding: 10px;
+                gap: 12px;
+            }
+            
+            .logo-image {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 12px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 6px;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+                margin-bottom: 10px;
+            }
+            
+            .ask-question-btn {
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                margin: 10px auto 16px;
+            }
+            
+            .analysis-sections {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin: 15px 0;
+            }
+            
+            .analysis-section {
+                padding: 14px;
+            }
+            
+            .analysis-btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+                gap: 8px;
+            }
+            
+            .analysis-btn i {
+                font-size: 0.9rem;
+            }
+            
+            .session-info {
+                padding: 10px;
+                margin: 10px 0;
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .session-info h3 {
+                font-size: 0.9rem;
+            }
+            
+            .disclaimer {
+                padding: 10px;
+                font-size: 0.8rem;
+                margin: 6px 0;
+            }
+            
+            .chat-container {
+                min-height: 400px;
+                border-radius: 8px;
+            }
+            
+            .chat-messages {
+                padding: 12px;
+                gap: 12px;
+                max-height: 300px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px 14px;
+                font-size: 0.85rem;
+                margin: 4px 0;
+            }
+            
+            .user-message {
+                border-bottom-right-radius: 8px;
+                border-top-right-radius: 16px;
+                border-top-left-radius: 16px;
+                border-bottom-left-radius: 16px;
+            }
+            
+            .ai-message {
+                border-bottom-left-radius: 8px;
+                border-top-right-radius: 16px;
+                border-top-left-radius: 16px;
+                border-bottom-right-radius: 16px;
+            }
+            
+            .auth-header {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                flex-wrap: wrap;
+            }
+            
+            .auth-links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 4px;
+            }
+            
+            .auth-links a {
+                margin-left: 0;
+            }
+            
+            .chat-input-wrapper {
+                gap: 8px;
+            }
+            
+            #chat-input {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+            
+            #send-button {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .avatar {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .avatar-icon {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+                gap: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .tagline {
+                font-size: 0.95rem;
+            }
+            
+            .analysis-sections {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .analysis-btn {
+                font-size: 0.78rem;
+                padding: 7px 9px;
+            }
+            
+            .chat-messages {
+                max-height: 280px;
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 95%;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .message-header {
+                font-size: 0.75rem;
+            }
+            
+            .avatar {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .avatar-icon {
+                font-size: 0.7rem;
+            }
+            
+            .chat-input-container {
+                padding: 15px;
+            }
+            
+            #chat-input {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+            
+            #send-button {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar.expanded {
+                width: 280px;
+            }
+            
+            .sidebar-header {
+                padding: 15px 10px;
+            }
+            
+            .sidebar:not(.expanded) .login-prompt .btn {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .sidebar:not(.expanded) .login-prompt .btn i {
+                font-size: 1rem;
+            }
+
+            .auth-header {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+
+            .auth-links {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Chat History</h3>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="sidebar-content">
+                {% if user.is_authenticated %}
+                    <div class="chat-history">
+                        <h3>Your Conversations</h3>
+                        <ul class="chat-list" id="chatList">
+                            <!-- Chat items will be loaded here by JavaScript -->
+                        </ul>
+                        <div class="collapsed-empty-state">
+                            <i class="fas fa-comments" style="font-size: 1.5rem; margin-bottom: 10px;"></i>
+                            <p style="font-size: 0.8rem;">Click to expand</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="login-prompt">
+                        <i class="fas fa-lock" style="font-size: 2rem; color: white; margin-bottom: 15px;"></i>
+                        <h4>Login Required</h4>
+                        <p>Sign in to view your chat history and access all features.</p>
+                        <a href="{% url 'login' %}" class="btn">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span class="login-text">Login</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Authentication Header -->
+            <div class="auth-header">
+                <div class="logo">
+                    <img src="/static/images/logo.png" alt="Doctor AI" class="logo-img">
+                    <span>Doctor AI</span>
+                </div>
+                <div class="auth-links">
+                    {% if user.is_authenticated %}
+                        <span>Welcome, {{ user.username }}!</span>
+                        <a href="{% url 'dashboard' %}">Dashboard</a>
+                        <a href="{% url 'logout' %}">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Login</a>
+                        <a href="{% url 'register' %}">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Guest Warning -->
+            {% if not user.is_authenticated %}
+            <div class="guest-warning">
+                <i class="fas fa-info-circle"></i>
+                You're using Doctor AI as a guest. <a href="{% url 'register' %}" style="color: #2c7be5;">Register</a> to save your conversations and access them later.
+            </div>
+            {% endif %}
+
+            <div class="container">
+                <header>
+                    <div class="logo-container">
+                        <!-- Custom Logo Image -->
+                        <img src="/static/images/logo.png" alt="Doctor AI Logo" class="logo-image" id="logoImage">
+                        <p class="tagline">Your AI-powered medical assistant for comprehensive health analysis</p>
+                        
+                        <!-- Ask Me a Question Button -->
+                        <button class="ask-question-btn" id="askQuestionBtn">
+                            <i class="fas fa-comment-medical"></i>
+                            Ask Me a Question
+                        </button>
+                    </div>
+                    
+                    <!-- Show session info if loading existing chat -->
+                    {% if session_title %}
+                    <div class="session-info">
+                        <div>
+                            <h3><i class="fas fa-history"></i> Continuing: {{ session_title }}</h3>
+                            <p>You can continue this conversation below, or start a new analysis using the buttons.</p>
+                        </div>
+                        <a href="{% url 'chat_interface' %}" class="btn">
+                            <i class="fas fa-plus"></i> New Analysis
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Show error message if session not found -->
+                    {% if error %}
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- ANALYSIS BUTTONS SECTION -->
+                    <div class="analysis-sections">
+                        <!-- Nutrition & Diet Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Nutrition & Diet</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('vitamin_minerals')">
+                                    <i class="fas fa-pills"></i>
+                                    Analyze your daily vitamin & minerals intake
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('food_quality')">
+                                    <i class="fas fa-apple-alt"></i>
+                                    Analyze your weekly quality of food
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('meal_balance')">
+                                    <i class="fas fa-balance-scale"></i>
+                                    Analyze your weekly meal balance
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('calorie_intake')">
+                                    <i class="fas fa-weight"></i>
+                                    Analyze your daily calorie intake
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('digestion')">
+                                    <i class="fas fa-stomach"></i>
+                                    Analyze your digestion & gut health patterns
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Exercise & Fitness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Exercise & Fitness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('exercise_routine')">
+                                    <i class="fas fa-running"></i>
+                                    Analyze your weekly exercise routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('exercise_balance')">
+                                    <i class="fas fa-dumbbell"></i>
+                                    Analyze your cardio vs strength training balance
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('mobility')">
+                                    <i class="fas fa-walking"></i>
+                                    Analyze your daily mobility & flexibility routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('posture')">
+                                    <i class="fas fa-user-md"></i>
+                                    Analyze your posture & ergonomics habits
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Mental Health & Wellness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Mental Health & Wellness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('sleep_quality')">
+                                    <i class="fas fa-bed"></i>
+                                    Analyze your sleep quality & habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('stress_levels')">
+                                    <i class="fas fa-brain"></i>
+                                    Analyze your stress levels & daily workload
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('mental_wellbeing')">
+                                    <i class="fas fa-heart"></i>
+                                    Analyze your mental well-being routine
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('energy_levels')">
+                                    <i class="fas fa-battery-half"></i>
+                                    Analyze your daily energy levels
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('productivity')">
+                                    <i class="fas fa-tasks"></i>
+                                    Analyze your daily productivity & burnout risk
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Lifestyle & Habits Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Lifestyle & Habits</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('hydration')">
+                                    <i class="fas fa-tint"></i>
+                                    Analyze your hydration levels throughout the day
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('caffeine')">
+                                    <i class="fas fa-coffee"></i>
+                                    Analyze your caffeine & stimulant consumption
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('alcohol')">
+                                    <i class="fas fa-wine-glass-alt"></i>
+                                    Analyze your alcohol intake & lifestyle balance
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('screen_time')">
+                                    <i class="fas fa-desktop"></i>
+                                    Analyze your screen time & blue-light exposure
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Health & Wellness Section -->
+                        <div class="analysis-section">
+                            <div class="section-title">Health & Wellness</div>
+                            <div class="analysis-grid">
+                                <button class="analysis-btn" onclick="startAnalysis('hormone_health')">
+                                    <i class="fas fa-seedling"></i>
+                                    Analyze your hormone-supporting lifestyle habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('immune_health')">
+                                    <i class="fas fa-shield-virus"></i>
+                                    Analyze your immune-supporting habits
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('chronic_pain')">
+                                    <i class="fas fa-band-aid"></i>
+                                    Analyze your chronic pain or discomfort patterns
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('environmental_toxins')">
+                                    <i class="fas fa-leaf"></i>
+                                    Analyze your household environmental toxins exposure
+                                </button>
+                                <button class="analysis-btn" onclick="startAnalysis('menstrual_health')">
+                                    <i class="fas fa-venus"></i>
+                                    Analyze your menstrual cycle health
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                
+                <div class="disclaimer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Important:</strong> Doctor AI is an AI assistant for informational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of qualified health providers with any medical questions.
+                </div>
+                
+                <div class="chat-container" id="chatContainer">
+                    <div class="chat-messages" id="chat-messages">
+                        {% if initial_messages %}
+                            {% for message in initial_messages %}
+                            <div class="message {% if message.is_user %}user-message{% else %}ai-message{% endif %}">
+                                <div class="message-header">
+                                    <div class="avatar {% if message.is_user %}user-avatar{% else %}ai-avatar{% endif %}">
+                                        {% if message.is_user %}
+                                            <i class="fas fa-user avatar-icon"></i>
+                                        {% else %}
+                                            <img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\"fas fa-robot avatar-icon\"></i>';">
+                                        {% endif %}
+                                    </div>
+                                    <span>{% if message.is_user %}You{% else %}Doctor AI{% endif %}</span>
+                                </div>
+                                <div class="message-content">
+                                    {% if not message.is_user %}
+                                        <!-- Render AI messages with markdown -->
+                                        <div id="message-{{ forloop.counter }}"></div>
+                                        <script>
+                                            document.getElementById('message-{{ forloop.counter }}').innerHTML = 
+                                                renderMarkdown(`{{ message.content|escapejs }}`);
+                                        </script>
+                                    {% else %}
+                                        <!-- User messages remain plain text -->
+                                        {{ message.content }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Default welcome message -->
+                            <div class="message ai-message">
+                                <div class="message-header">
+                                    <div class="avatar ai-avatar">
+                                        <img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\"fas fa-robot avatar-icon\"></i>';">
+                                    </div>
+                                    <span>Doctor AI</span>
+                                </div>
+                                <div class="message-content">
+                                    Welcome! I'm Doctor AI, your comprehensive health analysis assistant. Choose any analysis category above to begin our conversation. I'll ask you specific questions to understand your habits and provide personalized insights.
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="typing-indicator" id="typing-indicator">
+                        <div class="message-header">
+                            <div class="avatar ai-avatar">
+                                <img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<i class=\"fas fa-robot avatar-icon\"></i>';">
+                            </div>
+                            <span>Doctor AI</span>
+                        </div>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chat-input" placeholder="Type your message here...">
+                            <button id="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = {% if session_id %}'{{ session_id }}'{% else %}null{% endif %};
+        let currentSessionType = '{% if user.is_authenticated %}authenticated{% else %}guest{% endif %}';
+        let currentAnalysisType = '{% if analysis_type %}{{ analysis_type }}{% else %}general{% endif %}';
+
+        // Configure marked.js for markdown rendering
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            sanitize: false,
+            headerIds: false
+        });
+
+        // Function to render markdown
+        function renderMarkdown(content) {
+            try {
+                return marked.parse(content);
+            } catch (error) {
+                console.error('Markdown rendering error:', error);
+                return content;
+            }
+        }
+
+        // Sidebar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const chatList = document.getElementById('chatList');
+            const askQuestionBtn = document.getElementById('askQuestionBtn');
+            const chatContainer = document.getElementById('chatContainer');
+            const logoImage = document.getElementById('logoImage');
+
+            // Toggle sidebar
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('expanded');
+                const icon = this.querySelector('i');
+                if (sidebar.classList.contains('expanded')) {
+                    icon.className = 'fas fa-chevron-left';
+                } else {
+                    icon.className = 'fas fa-chevron-right';
+                }
+            });
+
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function() {
+                const isOpen = sidebar.classList.contains('open');
+                
+                if (isOpen) {
+                    sidebar.classList.remove('open');
+                    mobileMenuBtn.classList.remove('active');
+                } else {
+                    sidebar.classList.add('open');
+                    mobileMenuBtn.classList.add('active');
+                }
+            });
+
+            // Close sidebar when clicking overlay
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                mobileMenuBtn.classList.remove('active');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768) {
+                    const isClickInsideSidebar = sidebar.contains(event.target);
+                    const isClickOnMobileBtn = mobileMenuBtn.contains(event.target);
+                    
+                    if (!isClickInsideSidebar && !isClickOnMobileBtn && sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                        mobileMenuBtn.classList.remove('active');
+                    }
+                }
+            });
+
+            // Close sidebar when window is resized to desktop size
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('open');
+                    mobileMenuBtn.classList.remove('active');
+                }
+            });
+
+            // Scroll to chat functionality
+            askQuestionBtn.addEventListener('click', function() {
+                chatContainer.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                setTimeout(function() {
+                    document.getElementById('chat-input').focus();
+                }, 800);
+            });
+
+            // Add fallback if logo image fails to load
+            if (logoImage) {
+                logoImage.addEventListener('error', function() {
+                    console.log('Logo image failed to load');
+                    this.style.display = 'none';
+                });
+            }
+
+            // Load chat history for authenticated users
+            {% if user.is_authenticated %}
+                loadChatHistory();
+            {% endif %}
+
+            // Auto-scroll to bottom
+            const messagesContainer = document.getElementById('chat-messages');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+
+        // Load user's chat history
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/sessions/');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch sessions');
+                }
+                const data = await response.json();
+                
+                const chatList = document.getElementById('chatList');
+                chatList.innerHTML = '';
+                
+                if (data.sessions && data.sessions.length > 0) {
+                    data.sessions.forEach(session => {
+                        const chatItem = document.createElement('li');
+                        chatItem.className = 'chat-item';
+                        if (session.id === currentSessionId) {
+                            chatItem.classList.add('active');
+                        }
+                        
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'chat-item-tooltip';
+                        tooltip.textContent = session.title;
+                        
+                        const icon = document.createElement('i');
+                        icon.className = 'chat-item-icon fas fa-comment-medical';
+                        
+                        chatItem.innerHTML = `
+                            <div class="chat-title">${session.title}</div>
+                            <div class="chat-date">${session.created_at}</div>
+                        `;
+                        
+                        chatItem.appendChild(tooltip);
+                        chatItem.appendChild(icon);
+                        
+                        chatItem.addEventListener('click', function() {
+                            window.location.href = `/chat/${session.id}/`;
+                        });
+                        
+                        chatList.appendChild(chatItem);
+                    });
+                } else {
+                    chatList.innerHTML = `
+                        <li style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 20px;">
+                            <i class="fas fa-comment-medical" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p>No previous chats found</p>
+                            <p style="font-size: 0.9rem;">Start a new analysis to begin!</p>
+                        </li>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                const chatList = document.getElementById('chatList');
+                chatList.innerHTML = `
+                    <li style="text-align: center; color: #ff6b6b; padding: 20px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading chat history</p>
+                    </li>
+                `;
+            }
+        }
+
+        // Start analysis function
+        async function startAnalysis(analysisType) {
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/start_analysis/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        analysis_type: analysisType
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to start analysis');
+                }
+                
+                const data = await response.json();
+                currentSessionId = data.session_id;
+                currentSessionType = data.session_type;
+                currentAnalysisType = analysisType;
+                
+                hideTypingIndicator();
+                addMessage(data.ai_response, false);
+                
+                // Reload chat history to show the new session
+                {% if user.is_authenticated %}
+                    loadChatHistory();
+                {% endif %}
+                
+            } catch (error) {
+                console.error('Error starting analysis:', error);
+                hideTypingIndicator();
+                addMessage("I'm having trouble starting the analysis. Please try again.", false);
+            }
+        }
+        
+        // Send message function
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, true);
+            input.value = '';
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/send_message/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        session_type: currentSessionType,
+                        message: message
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.error) {
+                    addMessage("Session error. Please start a new analysis.", false);
+                } else {
+                    addMessage(data.ai_response, false);
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTypingIndicator();
+                addMessage("I'm having trouble responding. Please try again.", false);
+            }
+        }
+        
+        // Add message function with markdown support
+        function addMessage(content, isUser) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const messageHeader = document.createElement('div');
+            messageHeader.className = 'message-header';
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${isUser ? 'user-avatar' : 'ai-avatar'}`;
+            
+            if (isUser) {
+                avatar.innerHTML = '<i class="fas fa-user avatar-icon"></i>';
+            } else {
+                avatar.innerHTML = '<img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<i class=\"fas fa-robot avatar-icon\"></i>\';">';
+            }
+            
+            const sender = document.createElement('span');
+            sender.textContent = isUser ? 'You' : 'Doctor AI';
+            
+            messageHeader.appendChild(avatar);
+            messageHeader.appendChild(sender);
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            // Render markdown for AI messages, plain text for user messages
+            if (!isUser) {
+                messageContent.innerHTML = renderMarkdown(content);
+            } else {
+                messageContent.textContent = content;
+            }
+            
+            messageDiv.appendChild(messageHeader);
+            messageDiv.appendChild(messageContent);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'flex';
+            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'none';
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

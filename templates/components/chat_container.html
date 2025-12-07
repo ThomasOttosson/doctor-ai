@@ -1,0 +1,509 @@
+{% load static %}
+<div class="chat-container" id="chatContainer">
+    <div class="chat-messages" id="chat-messages">
+        {% if initial_messages %}
+            {% for message in initial_messages %}
+            <div class="message {% if message.is_user %}user-message{% else %}ai-message{% endif %}">
+                <div class="message-header">
+                    <div class="avatar {% if message.is_user %}user-avatar{% else %}ai-avatar{% endif %}">
+                        {% if message.is_user %}
+                            <i class="fas fa-user avatar-icon"></i>
+                        {% else %}
+                            <img src="{% static 'images/logo.png' %}" alt="Doctor AI" class="avatar-img">
+                        {% endif %}
+                    </div>
+                    <span>{% if message.is_user %}You{% else %}Doctor AI{% endif %}</span>
+                </div>
+                <div class="message-content">
+                    {% if not message.is_user %}
+                        <!-- Render AI messages with markdown -->
+                        <div id="message-{{ forloop.counter }}"></div>
+                        <script>
+                            document.getElementById('message-{{ forloop.counter }}').innerHTML = 
+                                renderMarkdown(`{{ message.content|escapejs }}`);
+                        </script>
+                    {% else %}
+                        <!-- User messages remain plain text -->
+                        {{ message.content }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Default welcome message -->
+            <div class="message ai-message">
+                <div class="message-header">
+                    <div class="avatar ai-avatar">
+                        <img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img">
+                    </div>
+                    <span>Doctor AI</span>
+                </div>
+                <div class="message-content">
+                    Welcome! I'm Doctor AI, your comprehensive health analysis assistant. Choose any analysis category above to begin our conversation. I'll ask you specific questions to understand your habits and provide personalized insights.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="typing-indicator" id="typing-indicator">
+        <div class="avatar ai-avatar">
+            <img src="/static/images/logo.png" alt="Doctor AI" class="avatar-img">
+        </div>
+        <span style="font-size: 0.85rem; opacity: 0.8;">Doctor AI</span>
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    </div>
+    
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <input type="text" id="chat-input" placeholder="Type your message here...">
+            <button id="send-button">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Import modern font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Avatar styles */
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
+.ai-avatar {
+    background-color: #2c7be5;
+    border-color: #2c7be5;
+}
+
+.user-avatar {
+    background-color: #495057;
+    border-color: #495057;
+}
+
+.avatar-icon {
+    color: white;
+    font-size: 0.9rem;
+}
+
+/* Ensure the avatar container properly centers its content */
+.avatar i, 
+.avatar img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Specific styling for the AI avatar to ensure logo fits perfectly */
+.ai-avatar .avatar-img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+}
+
+/* Modern Message Content Styling */
+.message-content {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: inherit;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+/* User message text styling */
+.user-message .message-content {
+    font-weight: 500;
+    letter-spacing: -0.015em;
+}
+
+/* AI message text styling */
+.ai-message .message-content {
+    font-weight: 400;
+    color: #2d3748;
+}
+
+/* Message header styling */
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    opacity: 0.85;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* Markdown elements within messages */
+.message-content h1, 
+.message-content h2, 
+.message-content h3 {
+    color: #2c7be5;
+    margin: 12px 0 8px 0;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+.message-content h1 { 
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.message-content h2 { 
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.message-content h3 { 
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.message-content strong {
+    font-weight: 600;
+    color: inherit;
+}
+
+.message-content em {
+    font-style: italic;
+    font-weight: 400;
+}
+
+.message-content ul, 
+.message-content ol {
+    margin: 10px 0;
+    padding-left: 24px;
+}
+
+.message-content li {
+    margin: 6px 0;
+    line-height: 1.6;
+}
+
+.message-content code {
+    background: rgba(44, 123, 229, 0.08);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.88em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.message-content pre {
+    background: #f8f9fa;
+    padding: 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+    border-left: 3px solid #2c7be5;
+}
+
+.message-content pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.message-content blockquote {
+    border-left: 3px solid #e9ecef;
+    padding-left: 16px;
+    margin: 12px 0;
+    color: #6c757d;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.message-content p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.message-content a {
+    color: #2c7be5;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.message-content a:hover {
+    color: #1a5db6;
+    text-decoration: underline;
+}
+
+/* Typing indicator styling */
+.typing-indicator {
+    display: none;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f0f4f8;
+    border-radius: 18px;
+    border-bottom-left-radius: 5px;
+    align-self: flex-start;
+    max-width: 80%;
+    gap: 10px;
+    margin-top: -12px;
+    margin-bottom: 12px;
+}
+
+.typing-indicator span {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.typing-indicator .avatar-img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    margin-left: 15px;
+}
+
+/* Input field styling */
+#chat-input {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+#chat-input::placeholder {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    opacity: 0.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-content {
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+    
+    .message-content h1 { font-size: 1.25rem; }
+    .message-content h2 { font-size: 1.1rem; }
+    .message-content h3 { font-size: 1rem; }
+    
+    .message-header {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .message-content {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+    
+    .message-content h1 { font-size: 1.15rem; }
+    .message-content h2 { font-size: 1.05rem; }
+    .message-content h3 { font-size: 0.95rem; }
+    
+    .message-header {
+        font-size: 0.75rem;
+    }
+}
+</style>
+
+<script>
+// Chat specific JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const askQuestionBtn = document.getElementById('askQuestionBtn');
+    const chatContainer = document.getElementById('chatContainer');
+
+    // Scroll to chat functionality
+    if (askQuestionBtn && chatContainer) {
+        askQuestionBtn.addEventListener('click', function() {
+            chatContainer.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            setTimeout(function() {
+                document.getElementById('chat-input').focus();
+            }, 800);
+        });
+    }
+
+    // Auto-scroll to bottom
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Initialize chat event listeners
+    const sendButton = document.getElementById('send-button');
+    const chatInput = document.getElementById('chat-input');
+
+    if (sendButton) {
+        sendButton.addEventListener('click', sendMessage);
+    }
+    
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    // Add error handling for logo images
+    const avatarImages = document.querySelectorAll('.avatar-img');
+    avatarImages.forEach(img => {
+        img.addEventListener('error', function() {
+            console.log('Avatar image failed to load, using fallback icon');
+            const avatar = this.closest('.avatar');
+            if (avatar && avatar.classList.contains('ai-avatar')) {
+                avatar.innerHTML = '<i class="fas fa-robot avatar-icon"></i>';
+            }
+        });
+    });
+});
+
+// Send message function
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    addMessage(message, true);
+    input.value = '';
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch('/api/send_message/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                session_id: currentSessionId,
+                session_type: currentSessionType,
+                message: message
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        
+        const data = await response.json();
+        hideTypingIndicator();
+        
+        if (data.error) {
+            addMessage("Session error. Please start a new analysis.", false);
+        } else {
+            addMessage(data.ai_response, false);
+        }
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        hideTypingIndicator();
+        addMessage("I'm having trouble responding. Please try again.", false);
+    }
+}
+
+// Add message function with markdown support
+function addMessage(content, isUser) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+    
+    const messageHeader = document.createElement('div');
+    messageHeader.className = 'message-header';
+    
+    const avatar = document.createElement('div');
+    avatar.className = `avatar ${isUser ? 'user-avatar' : 'ai-avatar'}`;
+    
+    if (isUser) {
+        avatar.innerHTML = '<i class="fas fa-user avatar-icon"></i>';
+    } else {
+        // Create logo with proper error handling
+        const logoImg = document.createElement('img');
+        logoImg.src = '/static/images/logo.png';
+        logoImg.alt = 'Doctor AI';
+        logoImg.className = 'avatar-img';
+        logoImg.onerror = function() {
+            this.style.display = 'none';
+            avatar.innerHTML = '<i class="fas fa-robot avatar-icon"></i>';
+        };
+        avatar.appendChild(logoImg);
+    }
+    
+    const sender = document.createElement('span');
+    sender.textContent = isUser ? 'You' : 'Doctor AI';
+    
+    messageHeader.appendChild(avatar);
+    messageHeader.appendChild(sender);
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    
+    // Render markdown for AI messages, plain text for user messages
+    if (!isUser) {
+        messageContent.innerHTML = renderMarkdown(content);
+    } else {
+        messageContent.textContent = content;
+    }
+    
+    messageDiv.appendChild(messageHeader);
+    messageDiv.appendChild(messageContent);
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function showTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    const messagesContainer = document.getElementById('chat-messages');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'flex';
+    }
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'none';
+    }
+}
+</script>

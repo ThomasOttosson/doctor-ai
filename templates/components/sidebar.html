@@ -1,0 +1,729 @@
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h3>Chat History</h3>
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="sidebar-content">
+        {% if user.is_authenticated %}
+            <div class="chat-history">
+                <h3>Your Conversations</h3>
+                <ul class="chat-list" id="chatList">
+                    <!-- Chat items will be loaded here by JavaScript -->
+                </ul>
+            </div>
+        {% else %}
+            <div class="login-prompt">
+                <i class="fas fa-lock"></i>
+                <h4>Login</h4>
+                <p>Sign in to view your chat history and access all features.</p>
+                <a href="{% url 'login' %}" class="btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span class="login-text">Login</span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Sidebar Styles */
+    .sidebar {
+        width: 280px;
+        background: linear-gradient(135deg, #2c7be5 0%, #1a5db6 100%);
+        transition: all 0.3s ease;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-height: 100vh;
+        position: sticky;
+        top: 0;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.15);
+        color: white;
+        z-index: 100;
+        flex-shrink: 0;
+    }
+
+    .sidebar.collapsed {
+        width: 70px;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+        padding: 20px 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.1);
+        min-height: 70px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: center;
+    }
+
+    .sidebar-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar.collapsed .sidebar-header h3 {
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .sidebar-toggle {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 8px;
+        transition: all 0.3s;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toggle:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+    }
+
+    .sidebar-toggle i {
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.collapsed .sidebar-toggle i {
+        transform: rotate(180deg);
+    }
+
+    /* Sidebar Content */
+    .sidebar-content {
+        padding: 20px 15px;
+    }
+
+    .sidebar.collapsed .sidebar-content {
+        padding: 15px 8px;
+    }
+
+    /* Chat History */
+    .chat-history h3 {
+        color: white;
+        margin-bottom: 15px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar.collapsed .chat-history h3 {
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .chat-list {
+        list-style: none;
+    }
+
+    .chat-item {
+        padding: 12px 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        min-height: 50px;
+        position: relative;
+    }
+
+    .sidebar.collapsed .chat-item {
+        justify-content: center;
+        padding: 12px 8px;
+    }
+
+    .chat-item:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+    }
+
+    .sidebar.collapsed .chat-item:hover {
+        transform: translateX(0) scale(1.05);
+    }
+
+    .chat-item.active {
+        border-color: white;
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .chat-item-icon {
+        color: white;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .chat-item-content {
+        flex: 1;
+        min-width: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar.collapsed .chat-item-content {
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .chat-title {
+        font-weight: 500;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.9rem;
+        line-height: 1.3;
+        margin-bottom: 4px;
+    }
+
+    .chat-date {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Tooltip for collapsed state */
+    .chat-item-tooltip {
+        position: absolute;
+        left: calc(100% + 15px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: #333;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .chat-item-tooltip::before {
+        content: '';
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-right-color: #333;
+    }
+
+    .sidebar.collapsed .chat-item:hover .chat-item-tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Login Prompt */
+    .login-prompt {
+        text-align: center;
+        padding: 20px 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .sidebar.collapsed .login-prompt {
+        padding: 15px 8px;
+    }
+
+    .login-prompt i {
+        font-size: 2rem;
+        color: white;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .sidebar.collapsed .login-prompt i {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+
+    .login-prompt h4 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar.collapsed .login-prompt h4 {
+        opacity: 1;
+        height: auto;
+        margin: 0 0 8px 0;
+        overflow: visible;
+        font-size: 0.75rem;
+    }
+
+    .login-prompt p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        margin-bottom: 16px;
+        opacity: 0.9;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar.collapsed .login-prompt p {
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .login-prompt .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+        min-width: 120px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .login-prompt .btn i {
+        font-size: 1rem;
+        margin: 0;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar.collapsed .login-prompt .btn {
+        padding: 0;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        min-width: auto;
+        gap: 0;
+    }
+
+    .sidebar.collapsed .login-prompt .btn i {
+        position: static;
+        transform: none;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .login-prompt .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-prompt .btn .login-text {
+        transition: opacity 0.3s ease;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .sidebar.collapsed .login-prompt .btn .login-text {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+
+    /* Scrollbar Styling */
+    .sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+        .sidebar {
+            position: fixed !important;
+            left: -280px !important;
+            height: 100vh;
+            width: 280px !important;
+            z-index: 1001;
+            box-shadow: none;
+            top: 0;
+        }
+
+        .sidebar.mobile-open {
+            left: 0 !important;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* On mobile, never show collapsed state */
+        .sidebar.collapsed {
+            width: 280px !important;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            justify-content: space-between;
+        }
+
+        .sidebar.collapsed .sidebar-header h3 {
+            opacity: 1;
+            position: static;
+            pointer-events: auto;
+        }
+
+        .sidebar.collapsed .chat-item {
+            justify-content: flex-start;
+            padding: 12px 15px;
+        }
+
+        .sidebar.collapsed .chat-item-content {
+            opacity: 1;
+            position: static;
+            pointer-events: auto;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            padding: 20px 15px;
+        }
+
+        .sidebar.collapsed .chat-history h3 {
+            opacity: 1;
+            height: auto;
+            margin-bottom: 15px;
+            overflow: visible;
+        }
+
+        .sidebar.collapsed .login-prompt {
+            padding: 20px 15px;
+        }
+
+        .sidebar.collapsed .login-prompt h4 {
+            opacity: 1;
+            height: auto;
+            margin-bottom: 8px;
+            overflow: visible;
+        }
+
+        .sidebar.collapsed .login-prompt p {
+            opacity: 0.9;
+            height: auto;
+            margin-bottom: 12px;
+            overflow: visible;
+        }
+
+        .sidebar.collapsed .login-prompt .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: auto;
+            height: auto;
+        }
+
+        .sidebar.collapsed .login-prompt .btn .login-text {
+            opacity: 1;
+            width: auto;
+            overflow: visible;
+        }
+
+        /* Change toggle icon to X on mobile */
+        .sidebar-toggle i {
+            font-size: 1.2rem;
+        }
+
+        /* Hide tooltip on mobile */
+        .chat-item-tooltip {
+            display: none;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .sidebar {
+            width: 260px !important;
+            left: -260px !important;
+        }
+
+        .sidebar.mobile-open {
+            left: 0 !important;
+        }
+
+        .sidebar.collapsed {
+            width: 260px !important;
+        }
+    }
+</style>
+
+<script>
+    // SIDEBAR FUNCTIONALITY - RUNS ONCE
+    (function() {
+        // Prevent multiple initializations
+        if (window.sidebarInitialized) {
+            console.log('Sidebar already initialized, skipping...');
+            return;
+        }
+        
+        window.sidebarInitialized = true;
+        console.log('Initializing sidebar...');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            console.log('Sidebar elements found:', {
+                sidebar: !!sidebar,
+                sidebarToggle: !!sidebarToggle,
+                mobileMenuBtn: !!mobileMenuBtn,
+                sidebarOverlay: !!sidebarOverlay
+            });
+
+            if (!sidebar) {
+                console.error('Sidebar element not found!');
+                return;
+            }
+
+            // Check if mobile
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+
+            // Update toggle button icon based on context
+            function updateToggleIcon() {
+                if (!sidebarToggle) return;
+                
+                if (isMobile()) {
+                    // On mobile, always show X icon to close
+                    sidebarToggle.querySelector('i').className = 'fas fa-times';
+                } else {
+                    // On desktop, show chevron based on collapsed state
+                    const isCollapsed = sidebar.classList.contains('collapsed');
+                    sidebarToggle.querySelector('i').className = isCollapsed ? 
+                        'fas fa-chevron-right' : 'fas fa-chevron-left';
+                }
+            }
+
+            // Initialize sidebar state
+            function initializeSidebar() {
+                if (!isMobile()) {
+                    // Desktop: restore saved preference or default to expanded
+                    const savedState = localStorage.getItem('sidebarCollapsed');
+                    if (savedState === 'true') {
+                        sidebar.classList.add('collapsed');
+                    } else {
+                        sidebar.classList.remove('collapsed');
+                    }
+                    sidebar.classList.remove('mobile-open');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                } else {
+                    // Mobile: start closed and never collapsed
+                    sidebar.classList.remove('mobile-open');
+                    sidebar.classList.remove('collapsed');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                    if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
+                }
+                updateToggleIcon();
+            }
+
+            // Sidebar toggle button handler
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Sidebar toggle clicked');
+                    
+                    if (isMobile()) {
+                        // On mobile, toggle button closes the sidebar
+                        closeMobileSidebar();
+                    } else {
+                        // On desktop, toggle collapsed state
+                        sidebar.classList.toggle('collapsed');
+                        const isCollapsed = sidebar.classList.contains('collapsed');
+                        localStorage.setItem('sidebarCollapsed', isCollapsed);
+                        updateToggleIcon();
+                    }
+                });
+            }
+
+            // Mobile menu button (open sidebar)
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Mobile menu clicked');
+                    
+                    const isOpen = sidebar.classList.contains('mobile-open');
+                    
+                    if (isOpen) {
+                        closeMobileSidebar();
+                    } else {
+                        openMobileSidebar();
+                    }
+                });
+            }
+
+            // Open mobile sidebar
+            function openMobileSidebar() {
+                console.log('Opening mobile sidebar');
+                sidebar.classList.add('mobile-open');
+                sidebar.classList.remove('collapsed'); // Never collapsed on mobile
+                if (sidebarOverlay) sidebarOverlay.classList.add('active');
+                if (mobileMenuBtn) mobileMenuBtn.classList.add('active');
+                updateToggleIcon();
+            }
+
+            // Close mobile sidebar
+            function closeMobileSidebar() {
+                console.log('Closing mobile sidebar');
+                sidebar.classList.remove('mobile-open');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
+            }
+
+            // Close sidebar when clicking overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    if (isMobile()) {
+                        closeMobileSidebar();
+                    }
+                });
+            }
+
+            // Close sidebar when clicking a chat item on mobile
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.chat-item') && isMobile()) {
+                    closeMobileSidebar();
+                }
+            });
+
+            // Close sidebar on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('mobile-open')) {
+                    closeMobileSidebar();
+                }
+            });
+
+            // Handle window resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    initializeSidebar();
+                }, 250);
+            });
+
+            // Initialize on load
+            initializeSidebar();
+        });
+    })();
+
+    // Load user's chat history
+    async function loadChatHistory() {
+        try {
+            const response = await fetch('/api/sessions/');
+            if (!response.ok) {
+                throw new Error('Failed to fetch sessions');
+            }
+            const data = await response.json();
+            
+            const chatList = document.getElementById('chatList');
+            if (!chatList) return;
+            
+            chatList.innerHTML = '';
+            
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(session => {
+                    const chatItem = document.createElement('li');
+                    chatItem.className = 'chat-item';
+                    
+                    // Check if this is the current session
+                    const isActiveSession = session.id === currentSessionId;
+                    if (isActiveSession) {
+                        chatItem.classList.add('active');
+                    }
+                    
+                    chatItem.innerHTML = `
+                        <i class="chat-item-icon fas fa-comment-medical"></i>
+                        <div class="chat-item-content">
+                            <div class="chat-title">${session.title}</div>
+                            <div class="chat-date">${new Date(session.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div class="chat-item-tooltip">${session.title}</div>
+                    `;
+                    
+                    chatItem.addEventListener('click', function() {
+                        window.location.href = `/chat/${session.id}/`;
+                    });
+                    
+                    chatList.appendChild(chatItem);
+                });
+            } else {
+                chatList.innerHTML = `
+                    <li style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 15px 8px;">
+                        <i class="fas fa-comment-medical" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                        <p style="font-size: 0.8rem;">No previous chats</p>
+                        <p style="font-size: 0.7rem; margin-top: 4px;">Start a new analysis!</p>
+                    </li>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            const chatList = document.getElementById('chatList');
+            if (chatList) {
+                chatList.innerHTML = `
+                    <li style="text-align: center; color: #ff6b6b; padding: 15px 8px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p style="font-size: 0.8rem;">Error loading history</p>
+                    </li>
+                `;
+            }
+        }
+    }
+
+    // Call this function when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadChatHistory();
+    });
+</script>
