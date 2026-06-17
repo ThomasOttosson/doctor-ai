@@ -425,6 +425,11 @@ async function sendMessage() {
         
         const data = await response.json();
         hideTypingIndicator();
+
+        if (data.session_id) {
+            currentSessionId = data.session_id;
+            currentSessionType = data.session_type || currentSessionType;
+        }
         
         if (data.error) {
             addMessage("Session error. Please start a new analysis.", false);

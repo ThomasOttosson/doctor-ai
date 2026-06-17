@@ -355,73 +355,92 @@ def send_message(request):
             data = json.loads(request.body)
             session_id = data.get('session_id')
             user_message = data.get('message')
-            session_type = data.get('session_type', 'authenticated')
-            
-            # Save user message
-            if session_type == 'authenticated' and request.user.is_authenticated:
-                # Authenticated user - save to database
-                session = AnalysisSession.objects.get(id=session_id, user=request.user)
+            session_type = data.get('session_type', 'guest')
+
+            if not user_message:
+                return JsonResponse({'error': 'Message is required'}, status=400)
+
+            if request.user.is_authenticated:
+                if session_id:
+                    session = AnalysisSession.objects.get(id=session_id, user=request.user)
+                else:
+                    session = AnalysisSession.objects.create(
+                        user=request.user,
+                        analysis_type='general',
+                        title='General Chat'
+                    )
+
                 ChatMessage.objects.create(
                     session=session,
                     content=user_message,
                     is_user=True
                 )
-                
-                # Get conversation history from database
+
                 messages = ChatMessage.objects.filter(session=session).order_by('timestamp')
                 conversation_history = "\n".join([
-                    f"{'User' if msg.is_user else 'Doctor AI'}: {msg.content}" 
+                    f"{'User' if msg.is_user else 'Doctor AI'}: {msg.content}"
                     for msg in messages
                 ])
-                
+
                 analysis_type = session.analysis_type
-                
+                session_id = session.id
+                session_type = 'authenticated'
+
             else:
-                # Guest user - use in-memory storage
-                if session_id not in guest_sessions:
-                    return JsonResponse({'error': 'Session not found'}, status=404)
-                
+                if not session_id or session_id not in guest_sessions:
+                    session_id = str(uuid.uuid4())
+                    guest_sessions[session_id] = {
+                        'analysis_type': 'general',
+                        'title': 'General Chat',
+                        'messages': [],
+                        'created_at': 'Just now'
+                    }
+
                 guest_sessions[session_id]['messages'].append({
                     'content': user_message,
                     'is_user': True,
                     'timestamp': 'Now'
                 })
-                
-                # Build conversation history from memory
+
                 messages = guest_sessions[session_id]['messages']
                 conversation_history = "\n".join([
-                    f"{'User' if msg['is_user'] else 'Doctor AI'}: {msg['content']}" 
+                    f"{'User' if msg['is_user'] else 'Doctor AI'}: {msg['content']}"
                     for msg in messages
                 ])
-                
+
                 analysis_type = guest_sessions[session_id]['analysis_type']
-            
-            # Get AI response
+                session_type = 'guest'
+
             ai_service = AIService()
             ai_response = ai_service.generate_response(conversation_history, analysis_type)
-            
-            # Save AI response
-            if session_type == 'authenticated' and request.user.is_authenticated:
+
+            if request.user.is_authenticated:
                 ChatMessage.objects.create(
                     session=session,
                     content=ai_response,
                     is_user=False
                 )
-                session.save()  # Update timestamp
+                session.save()
             else:
                 guest_sessions[session_id]['messages'].append({
                     'content': ai_response,
                     'is_user': False,
                     'timestamp': 'Now'
                 })
-            
-            return JsonResponse({'ai_response': ai_response})
-            
+
+            return JsonResponse({
+                'ai_response': ai_response,
+                'session_id': session_id,
+                'session_type': session_type
+            })
+
         except AnalysisSession.DoesNotExist:
             return JsonResponse({'error': 'Session not found'}, status=404)
         except Exception as e:
             print(f"Error in send_message: {e}")
             return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Only POST allowed'}, status=405)
 
 
 @login_required
