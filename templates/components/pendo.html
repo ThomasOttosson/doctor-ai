@@ -1,0 +1,33 @@
+<script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track', 'trackAgent'];for(w=0,x=v.length;w<x;++w)(function(m){
+    o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+    y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+    z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+})('b6a6a746-1653-4486-acb1-f8cc6559a6f5');
+</script>
+<script>
+pendo.initialize({
+    visitor: {
+        id: ''
+    }
+});
+{% if user.is_authenticated %}
+pendo.identify({
+    visitor: {
+        id: '{{ user.id }}',
+        email: '{{ user.email|escapejs }}',
+        full_name: '{{ user.first_name|escapejs }} {{ user.last_name|escapejs }}',
+        username: '{{ user.username|escapejs }}',
+        firstName: '{{ user.first_name|escapejs }}',
+        lastName: '{{ user.last_name|escapejs }}',
+        isStaff: {{ user.is_staff|yesno:"true,false" }},
+        isActive: {{ user.is_active|yesno:"true,false" }},
+        isSuperuser: {{ user.is_superuser|yesno:"true,false" }},
+        dateJoined: '{{ user.date_joined|date:"c" }}',
+        lastLogin: '{{ user.last_login|date:"c" }}'
+    }
+});
+{% endif %}
+</script>
