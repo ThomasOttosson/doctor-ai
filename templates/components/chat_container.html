@@ -465,10 +465,30 @@
         currentSessionType = data.session_type || currentSessionType;
       }
 
+      // Track chat message sent event
+      if (typeof pendo !== 'undefined') {
+          pendo.track('chat_message_sent', {
+              session_id: String(currentSessionId),
+              session_type: currentSessionType,
+              analysis_type: currentAnalysisType,
+              message_length: message.length
+          });
+      }
+
       if (data.error) {
         addMessage("Session error. Please start a new analysis.", false);
       } else {
         addMessage(data.ai_response, false);
+
+        // Track AI response received event
+        if (typeof pendo !== 'undefined') {
+            pendo.track('ai_response_received', {
+                session_id: String(currentSessionId),
+                analysis_type: currentAnalysisType,
+                response_length: data.ai_response.length,
+                session_type: currentSessionType
+            });
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);

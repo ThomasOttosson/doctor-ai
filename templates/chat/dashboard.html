@@ -482,5 +482,27 @@
             });
         });
     </script>
+
+    {% if pendo_event == 'registered' %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof pendo !== 'undefined') {
+            pendo.track('user_registered', {
+                registration_source: 'form'
+            });
+        }
+    });
+    </script>
+    {% elif pendo_event == 'logged_in' %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof pendo !== 'undefined') {
+            pendo.track('user_logged_in', {
+                login_method: 'form'
+            });
+        }
+    });
+    </script>
+    {% endif %}
 </body>
 </html>

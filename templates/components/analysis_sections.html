@@ -156,7 +156,16 @@ async function startAnalysis(analysisType) {
         
         hideTypingIndicator();
         addMessage(data.ai_response, false);
-        
+
+        // Track analysis started event
+        if (typeof pendo !== 'undefined') {
+            pendo.track('analysis_started', {
+                analysis_type: analysisType,
+                session_id: String(data.session_id),
+                session_type: data.session_type
+            });
+        }
+
         // Reload chat history to show the new session
         {% if user.is_authenticated %}
             if (typeof loadChatHistory === 'function') {
