@@ -1,0 +1,329 @@
+<div class="auth-header">
+    <div class="logo">
+        <img src="/static/images/logo.png" alt="Doctor AI" class="logo-img">
+        <span>Doctor AI</span>
+    </div>
+    <div class="auth-links">
+        {% if user.is_authenticated %}
+            <span class="welcome-text">Welcome, {{ user.username }}!</span>
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </a>
+            <a href="{% url 'register' %}">
+                <i class="fas fa-user-plus"></i>
+                <span>Register</span>
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Import Inter font for modern look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Authentication Header Styles - IMPROVED */
+.auth-header {
+    background: linear-gradient(135deg, #2c7be5 0%, #1a5db6 100%);
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Logo Section */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.logo-img {
+    height: 36px;
+    width: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: white;
+    padding: 2px;
+}
+
+.logo span {
+    white-space: nowrap;
+}
+
+/* Auth Links Container */
+.auth-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Welcome Text */
+.welcome-text {
+    font-weight: 500;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+/* Auth Links */
+.auth-links a {
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.auth-links a:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.auth-links a:active {
+    transform: translateY(0);
+}
+
+.auth-links a i {
+    font-size: 0.95rem;
+}
+
+/* Tablet Responsive - 768px to 1024px */
+@media (max-width: 1024px) {
+    .auth-header {
+        padding: 10px 20px;
+    }
+    
+    .logo {
+        font-size: 1.1rem;
+        gap: 10px;
+    }
+    
+    .logo-img {
+        height: 32px;
+        width: 32px;
+    }
+    
+    .auth-links {
+        gap: 6px;
+    }
+    
+    .auth-links a,
+    .welcome-text {
+        font-size: 0.85rem;
+        padding: 7px 12px;
+    }
+}
+
+/* Mobile Responsive - Below 768px */
+@media (max-width: 768px) {
+    .auth-header {
+        padding: 10px 16px;
+        gap: 10px;
+        flex-wrap: nowrap; /* Prevent wrapping - keep side by side */
+    }
+    
+    .logo {
+        font-size: 1rem;
+        gap: 8px;
+        flex-shrink: 0; /* Prevent logo from shrinking */
+        min-width: auto;
+    }
+    
+    .logo-img {
+        height: 30px;
+        width: 30px;
+    }
+    
+    .auth-links {
+        gap: 6px;
+        flex-shrink: 1; /* Allow links to shrink if needed */
+        justify-content: flex-end;
+        flex-wrap: nowrap; /* Keep links in one row */
+    }
+    
+    .welcome-text {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        flex-shrink: 1;
+        white-space: nowrap;
+    }
+    
+    .auth-links a {
+        font-size: 0.8rem;
+        padding: 7px 10px;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+    
+    .auth-links a i {
+        font-size: 0.85rem;
+    }
+}
+
+/* Small Mobile - Below 480px */
+@media (max-width: 480px) {
+    .auth-header {
+        padding: 10px 12px;
+        gap: 8px;
+        flex-wrap: nowrap; /* Force everything to stay in one row */
+    }
+    
+    .logo {
+        font-size: 0.85rem;
+        gap: 6px;
+        flex-shrink: 1; /* Allow logo to shrink slightly */
+    }
+    
+    .logo-img {
+        height: 28px;
+        width: 28px;
+        flex-shrink: 0;
+    }
+    
+    .auth-links {
+        gap: 4px;
+        flex-shrink: 0;
+        justify-content: flex-end;
+        flex-wrap: nowrap; /* Keep all links in one row */
+    }
+    
+    /* Keep welcome text visible but more compact */
+    .welcome-text {
+        font-size: 0.7rem;
+        padding: 5px 7px;
+        white-space: nowrap;
+        flex-shrink: 1;
+        max-width: none; /* Allow it to size naturally */
+    }
+    
+    /* Keep text labels visible but smaller */
+    .auth-links a span {
+        display: inline;
+        font-size: 0.7rem;
+    }
+    
+    .auth-links a {
+        padding: 5px 8px;
+        gap: 4px;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+    
+    .auth-links a i {
+        font-size: 0.8rem;
+    }
+}
+
+/* Extra Small Screens - Below 360px */
+@media (max-width: 360px) {
+    .auth-header {
+        padding: 8px 8px;
+        gap: 6px;
+        flex-wrap: nowrap; /* Still keep everything in one row */
+    }
+    
+    .logo {
+        font-size: 0.8rem;
+        gap: 5px;
+    }
+    
+    .logo-img {
+        height: 26px;
+        width: 26px;
+    }
+    
+    /* Keep welcome text visible */
+    .welcome-text {
+        font-size: 0.65rem;
+        padding: 4px 6px;
+        white-space: nowrap;
+    }
+    
+    .auth-links {
+        gap: 3px;
+    }
+    
+    .auth-links a {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+        gap: 3px;
+    }
+    
+    .auth-links a span {
+        font-size: 0.65rem;
+    }
+    
+    .auth-links a i {
+        font-size: 0.75rem;
+    }
+}
+
+/* Ensure proper alignment on all devices */
+.auth-header * {
+    vertical-align: middle;
+}
+
+/* Loading state for logo */
+.logo-img[src=""] {
+    display: none;
+}
+
+.logo-img {
+    transition: opacity 0.3s ease;
+}
+
+.logo-img:not([src]),
+.logo-img[src=""] {
+    opacity: 0;
+}
+</style>
+
+<script>
+// Handle logo image loading errors
+document.addEventListener('DOMContentLoaded', function() {
+    const logoImg = document.querySelector('.auth-header .logo-img');
+    if (logoImg) {
+        logoImg.addEventListener('error', function() {
+            console.log('Logo failed to load, hiding image');
+            this.style.display = 'none';
+        });
+    }
+});
+</script>
