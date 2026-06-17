@@ -435,6 +435,18 @@
 
     if (!message) return;
 
+    // Track user prompt
+    var promptMessageId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'prompt_' + Date.now();
+    if (typeof pendo !== 'undefined' && pendo.trackAgent) {
+      pendo.trackAgent("prompt", {
+        agentId: "yDXPyAbqZ9GkX5qxDjVxHlaJG30",
+        conversationId: String(currentSessionId || ""),
+        messageId: promptMessageId,
+        content: message,
+        suggestedPrompt: false
+      });
+    }
+
     addMessage(message, true);
     input.value = "";
     showTypingIndicator();
@@ -468,6 +480,17 @@
       if (data.error) {
         addMessage("Session error. Please start a new analysis.", false);
       } else {
+        // Track agent response
+        var responseMessageId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'agent_response_' + Date.now();
+        if (typeof pendo !== 'undefined' && pendo.trackAgent) {
+          pendo.trackAgent("agent_response", {
+            agentId: "yDXPyAbqZ9GkX5qxDjVxHlaJG30",
+            conversationId: String(currentSessionId || ""),
+            messageId: responseMessageId,
+            content: data.ai_response,
+            modelUsed: "gemini-2.5-pro"
+          });
+        }
         addMessage(data.ai_response, false);
       }
     } catch (error) {
