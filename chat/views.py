@@ -31,6 +31,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
+                request.session['pendo_event'] = 'logged_in'
                 return redirect('dashboard')
         else:
             return render(request, 'chat/login.html', {'form': form, 'error': 'Invalid credentials'})
@@ -47,6 +48,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            request.session['pendo_event'] = 'registered'
             return redirect('dashboard')
         else:
             return render(request, 'chat/register.html', {'form': form})
@@ -70,9 +72,12 @@ def dashboard(request):
     recent_sessions = AnalysisSession.objects.filter(user=request.user)[:5]
     session_count = AnalysisSession.objects.filter(user=request.user).count()
     
+    pendo_event = request.session.pop('pendo_event', None)
+    
     context = {
         'recent_sessions': recent_sessions,
         'session_count': session_count,
+        'pendo_event': pendo_event,
     }
     return render(request, 'chat/dashboard.html', context)
 
@@ -283,6 +288,8 @@ def chat_interface(request, session_id=None):
                 }
                 for msg in messages
             ]
+            context['message_count'] = len(context['initial_messages'])
+            context['session_resumed'] = True
             
             print(f"Loaded session {session_id} for user {request.user.username}")
             # print(f"Initial messages: {context['initial_messages']}")

@@ -48,4 +48,19 @@
 
 <!-- Chat Container -->
 {% include 'components/chat_container.html' %}
+
+{% if session_resumed %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof pendo !== 'undefined') {
+        pendo.track('analysis_session_resumed', {
+            session_id: '{{ session_id }}',
+            analysis_type: '{{ analysis_type|escapejs }}',
+            message_count: {{ message_count|default:0 }},
+            session_title: '{{ session_title|escapejs }}'
+        });
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
