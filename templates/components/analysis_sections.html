@@ -132,6 +132,18 @@
 // Analysis specific JavaScript
 async function startAnalysis(analysisType) {
     showTypingIndicator();
+
+    // Track suggested prompt (user selected an analysis type)
+    var promptMessageId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'prompt_' + Date.now();
+    if (typeof pendo !== 'undefined' && pendo.trackAgent) {
+        pendo.trackAgent("prompt", {
+            agentId: "yDXPyAbqZ9GkX5qxDjVxHlaJG30",
+            conversationId: String(currentSessionId || ""),
+            messageId: promptMessageId,
+            content: analysisType,
+            suggestedPrompt: true
+        });
+    }
     
     try {
         const response = await fetch('/api/start_analysis/', {
@@ -155,6 +167,19 @@ async function startAnalysis(analysisType) {
         currentAnalysisType = analysisType;
         
         hideTypingIndicator();
+
+        // Track agent response
+        var responseMessageId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'agent_response_' + Date.now();
+        if (typeof pendo !== 'undefined' && pendo.trackAgent) {
+            pendo.trackAgent("agent_response", {
+                agentId: "yDXPyAbqZ9GkX5qxDjVxHlaJG30",
+                conversationId: String(currentSessionId || ""),
+                messageId: responseMessageId,
+                content: data.ai_response,
+                modelUsed: "gemini-2.5-pro"
+            });
+        }
+
         addMessage(data.ai_response, false);
         
         // Reload chat history to show the new session
